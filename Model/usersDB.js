@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const userSchema = mongoose.Schema({
+    name: String,
     username:String,
     email:String,
     password:String,
@@ -7,7 +8,7 @@ const userSchema = mongoose.Schema({
     wishlist:[Object],
     orders:[Object]
 })
-module.exports = mongoose.model('products',userSchema)
+module.exports = mongoose.model('users',userSchema)
 
 //populate concept 
 // cart: [{ type: mongoose.Schema.ObjectId, ref: "Product" }],
