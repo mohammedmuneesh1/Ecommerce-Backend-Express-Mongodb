@@ -7,7 +7,7 @@ const tryCatch = require('../Middleware/errorHandler')
 const verifyToken = require('../Middleware/userAuthMiddleware')
 router
 .post('/register',tryCatch(userController.userRegister))
-
+.post('/login',tryCatch(userController.login))
 
 
 
