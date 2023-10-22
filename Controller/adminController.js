@@ -1,4 +1,4 @@
-require('dotenv').config()
+
 const mongoose = require('mongoose')  //not necessary remove the line after final code 
 const jwt = require('jsonwebtoken')
 const dbConnection = require('../Model/databaseConnection')
@@ -94,8 +94,6 @@ module.exports={
             message: "Product not found in the database"
           });
         }
-      
-        // If the product is found, you can return a success response.
         res.status(200).json({
           status: 'success',
           message: 'Successfully fetched product details',
@@ -107,8 +105,31 @@ module.exports={
 
 
 
-    updateproduct:async(req,res)=>{
-        res.json("updateproduct pending")
+    updateProduct:async(req,res)=>{
+        const {id,title,description,price,image,category} = req.body
+        const datavailable = await productDB.findById(id)
+
+        if(!datavailable){
+            return res.status(404).json({status:"failure",message:"Product not found in the database. Check the product ID."})
+        }
+        const updatedProduct = await productDB.findByIdAndUpdate(
+               { _id:id }
+            ,
+            {
+                $set:{
+                title,
+                description,
+                price,
+                image,
+                category
+            }
+        }
+        );
+        res.status(200).json({status:"success",message:'successfully update a product.'})
+
+
+
+
 
     },
     totalproductpurchased:async(req,res)=>{
