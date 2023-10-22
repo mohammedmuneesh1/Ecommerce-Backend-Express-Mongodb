@@ -14,6 +14,7 @@ router
 .post('/products',tryCatch(controller.createProduct))
 .delete('/products',tryCatch(controller.deleteProduct))
 .get('/products',tryCatch(controller.allProduct))
+.get('/products/:id',tryCatch(controller.productById))
 .get('/products/category',tryCatch(controller.productByCategory))
 
 

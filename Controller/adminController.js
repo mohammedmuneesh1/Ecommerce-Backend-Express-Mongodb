@@ -84,12 +84,29 @@ module.exports={
        res.json({status:"Successfully fetched product details",message:"got value",data})
 
     },
-    viewspecificproduct:async(req,res)=>{
-        res.json("specific product  pending")
 
-    },
+    productById: async (req, res) => {
+        const id = req.params.id;
+        const product = await productDB.findById(id);
+        if (!product ) {
+          return res.status(404).json({
+            status: "failure",
+            message: "Product not found in the database"
+          });
+        }
+      
+        // If the product is found, you can return a success response.
+        res.status(200).json({
+          status: 'success',
+          message: 'Successfully fetched product details',
+          data: product
+        });
+      },
+
    
-  
+
+
+
     updateproduct:async(req,res)=>{
         res.json("updateproduct pending")
 
