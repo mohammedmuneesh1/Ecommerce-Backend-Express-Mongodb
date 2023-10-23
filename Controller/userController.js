@@ -122,8 +122,15 @@ module.exports = {
       data: userCart.cart,
     });
   },
- 
-
+  deleteCart:async(req,res)=>{
+    const id = req.params.id
+    const {productId} = req.body
+    console.log(productId)
+    if(!productId){ return res.json({message:"make sure you entered [ productId ]"})}
+     await userDB.updateOne({_id:id},{$pull : {cart:productId}})
+    res.status(200).json({status:"Success",message:"Successfully removed item from cart"})
+  }
+,
   wishList: async (req, res) => {
     const id = req.params.id;
     const { productId } = req.body;
@@ -160,4 +167,13 @@ module.exports = {
     res.status(400).json({status:"Success",wishlist:products.wishlist})
   }
   ,
+  deleteWishlist:async(req,res)=>{
+    const id = req.params.id
+    const {productId} = req.body
+    if(!productId){
+     return res.status(404).json({status:"failure",message:"make sure you entered [ productId ] "})
+    }
+    await userDB.updateOne({_id:id} , {$pull:{wishlist:productId}})
+    res.status(200).json({status:"Successfully removed from wishlist",})
+  }
 };
