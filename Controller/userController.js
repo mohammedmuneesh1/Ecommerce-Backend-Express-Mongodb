@@ -1,6 +1,7 @@
 require("dotenv").config();
 const dbConnection = require("../Model/databaseConnection");
 const userDB = require("../Model/usersDB");
+const productDB = require('../')
 const jwt = require('jsonwebtoken')
 
 module.exports = {
@@ -13,6 +14,7 @@ module.exports = {
         message: "make sure you entered name,email,username,password",
       });
     }
+
 
     //check if username already exist on database userDB
     const Ucheck = await userDB.findOne({ username });
@@ -45,4 +47,7 @@ module.exports = {
       jwt: token,
     });
   },
+  products:async(req,res)=>{
+    // const products =
+  }
 };
