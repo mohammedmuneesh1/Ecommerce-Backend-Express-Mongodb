@@ -9,15 +9,13 @@ router
 .post('/register',tryCatch(userController.userRegister))
 .post('/login',tryCatch(userController.login))
 .use(verifyToken)
-.get('/products',)
-
-
-
-
-
-
-
-
+.get('/products',tryCatch(userController.products))
+.get('/products/:id',tryCatch(userController.productById))
+.get('/products/category/:categoryname',tryCatch(userController.productByCategory))
+.post('/:id/cart',tryCatch(userController.addToCart))
+.get('/:id/cart',tryCatch(userController.showCart))
+.post('/:id/wishlist',tryCatch(userController.wishList))
+.get('/:id/wishlist',tryCatch(userController.showWishlist))
 
 
 
