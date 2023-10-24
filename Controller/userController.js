@@ -1,8 +1,11 @@
-require("dotenv").config();
+
 const dbConnection = require("../Model/databaseConnection");
 const userDB = require("../Model/usersDB");
 const productDB = require("../Model/productsDB");
+const orderDB = require('../Model/OrderDB')
 const jwt = require("jsonwebtoken");
+const { response } = require("express");
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 module.exports = {
   userRegister: async (req, res) => {
@@ -83,6 +86,9 @@ module.exports = {
   },
   addToCart: async (req, res) => {
     const userId = req.params.id;
+    const checkuser = await userDB.findById(userId)
+    if(!checkuser){return res.status(404).json({message:"User not found."})}
+
     const { productId } = req.body;
     if (!productId) {
       return res.json({
@@ -94,7 +100,6 @@ module.exports = {
     // console.log(chkItemExist)
     if (chkItemExist) {
       return res.status(409).json({
-        status: "Success",
         message: "This product is already in your cart.",
       });
     }
@@ -126,7 +131,9 @@ module.exports = {
     const id = req.params.id
     const {productId} = req.body
     console.log(productId)
+    //add id check not necessary
     if(!productId){ return res.json({message:"make sure you entered [ productId ]"})}
+
      await userDB.updateOne({_id:id},{$pull : {cart:productId}})
     res.status(200).json({status:"Success",message:"Successfully removed item from cart"})
   }
@@ -141,7 +148,6 @@ module.exports = {
         message: `make sure you entered productId:`,
       });
     }
-
     //checking if product already exist in wish list
     const chkExist = await userDB.findOne({ _id: id, wishlist: productId });
     // console.log(chkExist);
@@ -175,5 +181,72 @@ module.exports = {
     }
     await userDB.updateOne({_id:id} , {$pull:{wishlist:productId}})
     res.status(200).json({status:"Successfully removed from wishlist",})
+  },
+
+  payment:async(req,res)=>{
+
+    const id = req.params.id
+    const qty = req.body
+    const user = await userDB.find({_id:id}).populate('cart') //user with cart
+    if(!user) { return res.status(404).json({message:"user not found "})}
+    const cartItems = user[0].cart;
+    if(cartItems.length === 0){ return res.status(400).json({message:"Your cart is empty"})}
+
+
+    const lineItems = cartItems.map((item) => {
+      return {
+        price_data: {
+          currency: 'inr',
+          product_data: {
+            name: item.title,
+            description: item.description,
+          },
+          unit_amount: Math.round(item.price * 100)   , // when item.price only given ,error occur, why ? check its reason . why multiply 100
+        },
+        quantity:1,
+      };
+    });
+     //declaring session as global variable
+
+     session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],     //, 'apple_pay', 'google_pay', 'alipay',card
+      line_items: lineItems, 
+      mode: 'payment',
+      success_url: `http://localhost/api/users/${id}/payment/success`, // Replace with your success URL
+      cancel_url: 'http://localhost/api/users/payment/cancel',   // Replace with your cancel URL
+    });
+    if(!session){
+     return res.json({status:"Failure", message:" Error occured on  Session side"})
+
+    }
+    res.status(200).json({status:"Success",message:"Strip payment session created",url:session.url})
+    // if(session){
+    //    if(!order){
+    //    return  res.json({status:"failure",message:'order not stored on order collection '})
+    //    }
+    //    return res.json({ status:"Success",message:"payment completed" , session_id:session.id,url:session.url})
+    // }
+    // res.json({message:"payment error"})
+
+
+  },
+
+
+  success:async(req,res)=>{
+    // const id = req.params.id
+    // console.log(id)
+    // const user = await userDB.findOne({_id:id}) //find returns an array , findOne returns an object
+    // const order = await orderDB.create({products:user.cart.map(value=>value.id) ,order_id:session.id,payment_id:session.payment_intent})
+    res.send("success working ")
+  },
+
+
+  cancel:async (req,res)=>{
+    res.send("cancel working ")
   }
+
 };
+
+
+
+

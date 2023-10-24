@@ -18,6 +18,9 @@ router
 .get('/:id/wishlist',tryCatch(userController.showWishlist))
 .delete('/:id/cart',tryCatch(userController.deleteCart))
 .delete('/:id/wishlist',tryCatch(userController.deleteWishlist))
+.post('/:id/payment',userController.payment)
+.post('/:id/payment/success',userController.success)
+.post('/payment/cancel',userController.cancel)
 
 
 
