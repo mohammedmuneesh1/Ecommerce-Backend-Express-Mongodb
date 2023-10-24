@@ -7,6 +7,14 @@ const jwt = require("jsonwebtoken");
 const { response } = require("express");
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
+
+//global variable start
+let uid;
+
+//global variable end
+
+
+
 module.exports = {
   userRegister: async (req, res) => {
     const { name, email, username, password } = req.body;
@@ -185,7 +193,8 @@ module.exports = {
 
   payment:async(req,res)=>{
 
-    const id = req.params.id
+     const id = req.params.id
+     uid = id; //for passing as global variable  
     const qty = req.body
     const user = await userDB.find({_id:id}).populate('cart') //user with cart
     if(!user) { return res.status(404).json({message:"user not found "})}
@@ -212,8 +221,8 @@ module.exports = {
       payment_method_types: ['card'],     //, 'apple_pay', 'google_pay', 'alipay',card
       line_items: lineItems, 
       mode: 'payment',
-      success_url: `http://localhost/api/users/${id}/payment/success`, // Replace with your success URL
-      cancel_url: 'http://localhost/api/users/payment/cancel',   // Replace with your cancel URL
+      success_url: `http://localhost:3000/api/users/${id}/payment/success`, // Replace with your success URL
+      cancel_url: 'http://localhost:3000/api/users/payment/cancel',   // Replace with your cancel URL
     });
     if(!session){
      return res.json({status:"Failure", message:" Error occured on  Session side"})
@@ -233,12 +242,19 @@ module.exports = {
 
 
   success:async(req,res)=>{
-    // const id = req.params.id
-    // console.log(id)
-    // const user = await userDB.findOne({_id:id}) //find returns an array , findOne returns an object
+    //for getting uid and session , first call http://127.0.0.1:3000/api/users/65322ee4d8ba5ee457d306bc/payment/success
+   //then only uid and session works 
+    // console.log(uid)
+    // console.log(session)
+
+    // const user = await userDB.findOne({_id:uid})
+    // if(user){return res.send("we found you")}
+    //find returns an array , findOne returns an object
     // const order = await orderDB.create({products:user.cart.map(value=>value.id) ,order_id:session.id,payment_id:session.payment_intent})
     res.send("success working ")
+    // res.json({user})
   },
+
 
 
   cancel:async (req,res)=>{
