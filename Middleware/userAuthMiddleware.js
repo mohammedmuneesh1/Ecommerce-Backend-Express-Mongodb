@@ -2,10 +2,12 @@ const jwt = require('jsonwebtoken')
 //function for verifying the token
 module.exports = function verifyToken(req,res,next){
     const Btoken = req.headers['authorization']
+    
+  if (!Btoken) {
+    return res.status(403).json({ error: 'No Token Provided 123' });
+  }
     let token = Btoken.split(' ')[1]
-    if(!token){
-       return res.status(403).json({error:"No Token Provided"})
-    }
+   
     // console.log(token)
     jwt.verify(token,process.env.USER_ACCESS_TOKEN_SECRET,(err,decoded)=>{
         if(err){
@@ -15,3 +17,8 @@ module.exports = function verifyToken(req,res,next){
         
     })
 }
+
+
+
+
+
