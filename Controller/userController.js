@@ -293,5 +293,31 @@ module.exports = {
     
   },
 
+  showOrders:async(req,res)=>{
+    //code need changes
+    const id = req.params.id;
+    const user = await userDB.findOne({ _id: id }).populate({
+      path: 'orders',
+      populate: {
+        path: 'products',
+        model: 'products',
+      },
+    });
+
+    if(!user){ return res.status(404).json({status:"Failure",message:"User not found."})}
+    console.log(user);
+    // const orderDetails = user.orders
+
+  //  const productpurchased = await Promise.all(orderDetails.map(async (order) => {
+  //   await order.populate('products.product').execPopulate();
+  //   return order;
+  // }));
+    // const productDetailsPurchased = await orderDetails.populate('products.product').execPopulate();
+    
+    // console.log(orderDetails)
+    // console.log(productpurchased)
+    res.json({status:"Success.", message:"Your orders"})
+  }
+
 };
 
