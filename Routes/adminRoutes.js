@@ -17,7 +17,8 @@ router
 .get('/products/:id',tryCatch(controller.productById))
 .get('/products/category',tryCatch(controller.productByCategory))
 .put('/products',tryCatch(controller.updateProduct))
-
+.get('/orders',tryCatch(controller.orderDetails))
+.get('/stats',tryCatch(controller.analysis))
 
 
 

@@ -122,14 +122,15 @@ module.exports = {
 
   showCart: async (req, res) => {
     const userId = req.params.id;
-    const userCart = await userDB.findOne({ _id: userId }).populate("cart");
-    if (!userCart) {
+    const user = await userDB.findOne({ _id: userId }).populate("cart"); 
+    if (!user) {
       return res.status(404).json({ error: "nothing to show on the cart" });
     }
+    if(user.cart.length === 0){ return res.json({message:'you have nothing on cart. add some products'})}
     res.json({
       status: "Success",
       message: "Cart details retrieved successfully",
-      data: userCart.cart,
+      data: user.cart,
     });
   },
   deleteCart: async (req, res) => {
@@ -249,9 +250,8 @@ module.exports = {
   success: async (req, res) => {
     const { id, user, session } = sValue;
     const cartItems = user.cart;
-    console.log(cartItems);
 
-    const paymentId = session.payment_intent; //payment_intent showing null
+    // const paymentId = session.payment_intent; //payment_intent showing null
     // console.log(paymentId)
 
     const order = await orderDB.create({
@@ -293,31 +293,22 @@ module.exports = {
     
   },
 
+
+
   showOrders:async(req,res)=>{
     //code need changes
     const id = req.params.id;
-    const user = await userDB.findOne({ _id: id }).populate({
-      path: 'orders',
-      populate: {
-        path: 'products',
-        model: 'products',
-      },
-    });
-
+ const user = await userDB.findById(id).populate('orders')
     if(!user){ return res.status(404).json({status:"Failure",message:"User not found."})}
-    console.log(user);
-    // const orderDetails = user.orders
-
-  //  const productpurchased = await Promise.all(orderDetails.map(async (order) => {
-  //   await order.populate('products.product').execPopulate();
-  //   return order;
-  // }));
-    // const productDetailsPurchased = await orderDetails.populate('products.product').execPopulate();
-    
-    // console.log(orderDetails)
-    // console.log(productpurchased)
-    res.json({status:"Success.", message:"Your orders"})
+    const uOrder = user.orders;  //userOrder
+    // console.log(uOderId)
+    // console.log(uOrder)
+    if(!uOrder || uOrder.length === 0){return res.status(200).json({message:"you have no orders to show"})}
+    const orderProductDetails = await orderDB.find({ _id: { $in: uOrder } }).populate('products');
+    //[{id},{id}] for accessing id inside array with many object use $in ***IMP***
+    res.status(200).json({status:"Success.", message:"Fetched Order Details",orderProductDetails})
   }
 
 };
+
 
