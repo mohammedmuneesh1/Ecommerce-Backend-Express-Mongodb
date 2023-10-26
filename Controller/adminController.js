@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const userDB = require("../Model/usersDB");
 const productDB = require("../Model/productsDB");
 const OrderDB = require("../Model/OrderDB");
+const {joiProductSchema} = require('../Model/validateJoiSchema')
 module.exports = {
   login: async (req, res) => {
     const { username, password } = req.body;
@@ -65,22 +66,21 @@ module.exports = {
         data: user,
       });
   },
+
   createProduct: async (req, res) => {
-    const { title, description, price, image, category } = req.body;
-    if (!title || !description || !price || !image || !category) {
-      return res
-        .status(400)
-        .json({
-          status: "failure",
-          message:
-            "missing required title, description, price, image, category",
-        });
-    }
+    const {value,error} = joiProductSchema.validate(req.body);
+    if(error){ return res.status(400).json({message:error.details[0].message})}
+
+    const { title, description, price, image, category } = value;
+  
     await productDB.create({ title, description, price, image, category });
     res
       .status(201)
       .json({ status: "success", message: "successfully created a product" });
   },
+
+
+
   deleteProduct: async (req, res) => {
     const { id } = req.body;
     const productDeleted = await productDB.findByIdAndRemove(id);
@@ -146,19 +146,21 @@ module.exports = {
   },
 
   updateProduct: async (req, res) => {
-    const { id, title, description, price, image, category } = req.body;
-    const datavailable = await productDB.findById(id);
+    const {value,error}= joiProductSchema.validate(req.body)
+    if(error){return res.status(401).json({message:error.details[0].message})}
 
-    if (!datavailable) {
+    const { productId, title, description, price, image, category } = value;
+    const pIdCheck = await productDB.findById(productId); //checking product by its id if product exist
+    if (!pIdCheck) {
       return res
         .status(404)
         .json({
           status: "failure",
-          message: "Product not found in the database. Check the product ID.",
+          message: "Product not found in the database. Check the product Id.",
         });
     }
-    const updatedProduct = await productDB.findByIdAndUpdate(
-      { _id: id },
+     await productDB.findByIdAndUpdate(
+      { _id: productId },
       {
         $set: {
           title,

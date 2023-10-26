@@ -3,10 +3,15 @@ const userDB = require("../Model/usersDB");
 const productDB = require("../Model/productsDB");
 const orderDB = require("../Model/OrderDB");
 const jwt = require("jsonwebtoken");
-const { response } = require("express");
+const {
+  joiUserRegisterSchema,
+  joiUserLoginSchema,
+} = require("../Model/validateJoiSchema");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 const mongoose = require("mongoose");
 const usersDB = require("../Model/usersDB");
+const bcrypt = require("bcrypt");
 //global variable start
 let sValue = {};
 
@@ -14,46 +19,63 @@ let sValue = {};
 
 module.exports = {
   userRegister: async (req, res) => {
-    const { name, email, username, password } = req.body;
-
-    if (!username || !password || !name || !email) {
-      return res.status(400).json({
-        status: "failure",
-        message: "make sure you entered name,email,username,password",
-      });
+    const { value, error } = joiUserRegisterSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
     }
-
+    const { name, email, username, password } = value;
     //check if username already exist on database userDB
     const Ucheck = await userDB.findOne({ username });
+    const uEmailCheck = await userDB.findOne({ email });
     if (Ucheck) {
       return res.status(409).json({
         message: "Username already taken. Please choose a different username",
       });
-      //409 conflict [conflict due to username already in use]
+       //409 conflict [conflict due to username already in use]
     }
+      else if (uEmailCheck){return res.status(409).json({message:"Already registered with this email. Provide new Email"})}
+    
+     
+
+    // PASSWORD HASHING WITHOUT PRE SAVE MIDDLEWARE
+    // const salt =await bcrypt.genSalt(10)
+    // const hashedPassword = await bcrypt.hash(password,salt)
+    // await userDB.create({ username, password:hashedPassword, email, name });
 
     await userDB.create({ username, password, email, name });
-    // console.log(data)
     res
       .status(201)
       .json({ status: "success", message: "Registration successful!" });
   },
 
   login: async (req, res) => {
-    const { username, password } = req.body;
-    const userCheck = await userDB.findOne({ username, password });
-    if (!userCheck) {
+    const { value, error } = joiUserLoginSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+    const { email, password } = value;
+    const user = await userDB.findOne({ email });
+    if (!user) {
       return res
         .status(404)
         .json({ status: "failure", message: "user not found on database" });
     }
-    const token = jwt.sign({ username }, process.env.USER_ACCESS_TOKEN_SECRET);
+    const passCheck = bcrypt.compare(password, user.password);
+    if (!passCheck) {
+      return res
+        .status(401)
+        .json({ status: "Failure", message: "Incorrect Password" });
+    }
+    const token = jwt.sign({ email }, process.env.USER_ACCESS_TOKEN_SECRET);
     res.status(200).json({
       status: "success",
       message: "User successfully logged",
       jwt: token,
     });
   },
+
+
+  
   products: async (req, res) => {
     const products = await productDB.find();
     res.status(200).json({
@@ -122,17 +144,22 @@ module.exports = {
 
   showCart: async (req, res) => {
     const userId = req.params.id;
-    const user = await userDB.findOne({ _id: userId }).populate("cart"); 
+    const user = await userDB.findOne({ _id: userId }).populate("cart");
     if (!user) {
       return res.status(404).json({ error: "nothing to show on the cart" });
     }
-    if(user.cart.length === 0){ return res.json({message:'you have nothing on cart. add some products'})}
+    if (user.cart.length === 0) {
+      return res.json({
+        message: "you have nothing on cart. add some products",
+      });
+    }
     res.json({
       status: "Success",
       message: "Cart details retrieved successfully",
       data: user.cart,
     });
   },
+
   deleteCart: async (req, res) => {
     const id = req.params.id;
     const { productId } = req.body;
@@ -287,28 +314,34 @@ module.exports = {
 
   cancel: async (req, res) => {
     res.status(200).json({
-      status:"Success",
-      message:"Payment cancelled."
-    })
-    
+      status: "Success",
+      message: "Payment cancelled.",
+    });
   },
 
-
-
-  showOrders:async(req,res)=>{
+  showOrders: async (req, res) => {
     //code need changes
     const id = req.params.id;
- const user = await userDB.findById(id).populate('orders')
-    if(!user){ return res.status(404).json({status:"Failure",message:"User not found."})}
-    const uOrder = user.orders;  //userOrder
+    const user = await userDB.findById(id).populate("orders");
+    if (!user) {
+      return res
+        .status(404)
+        .json({ status: "Failure", message: "User not found." });
+    }
+    const uOrder = user.orders; //userOrder
     // console.log(uOderId)
     // console.log(uOrder)
-    if(!uOrder || uOrder.length === 0){return res.status(200).json({message:"you have no orders to show"})}
-    const orderProductDetails = await orderDB.find({ _id: { $in: uOrder } }).populate('products');
+    if (!uOrder || uOrder.length === 0) {
+      return res.status(200).json({ message: "you have no orders to show" });
+    }
+    const orderProductDetails = await orderDB
+      .find({ _id: { $in: uOrder } })
+      .populate("products");
     //[{id},{id}] for accessing id inside array with many object use $in ***IMP***
-    res.status(200).json({status:"Success.", message:"Fetched Order Details",orderProductDetails})
-  }
-
+    res.status(200).json({
+      status: "Success.",
+      message: "Fetched Order Details",
+      orderProductDetails,
+    });
+  },
 };
-
-
