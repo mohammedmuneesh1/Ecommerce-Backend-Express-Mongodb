@@ -19,6 +19,7 @@ const joiProductSchema = joi.object({
     image: joi.string().required(),
     description: joi.string().required(),
     category: joi.string().required()
+    
 });
 
 

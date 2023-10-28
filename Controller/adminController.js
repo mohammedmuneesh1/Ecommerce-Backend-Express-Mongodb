@@ -1,9 +1,9 @@
-const mongoose = require("mongoose"); //not necessary remove the line after final code
 const jwt = require("jsonwebtoken");
 const userDB = require("../Model/usersDB");
 const productDB = require("../Model/productsDB");
 const OrderDB = require("../Model/OrderDB");
-const {joiProductSchema} = require('../Model/validateJoiSchema')
+const { joiProductSchema } = require("../Model/validateJoiSchema");
+
 module.exports = {
   login: async (req, res) => {
     const { username, password } = req.body;
@@ -12,7 +12,6 @@ module.exports = {
       username === process.env.ADMIN_USERNAME &&
       password === process.env.ADMIN_PASSWORD
     ) {
-      //ADMIN OG U-NAME && U-PASSWORD IN .env
       const token = jwt.sign(
         { username },
         process.env.ADMIN_ACCESS_TOKEN_SECRET
@@ -21,7 +20,6 @@ module.exports = {
         status: "success",
         message: "successfully logged",
         jwt_token: token,
-        //adding jwt pending data:{jwt_token:String}
       });
     } else {
       return res.status(404).json({ message: "User not found" });
@@ -30,12 +28,10 @@ module.exports = {
   viewUsers: async (req, res) => {
     const data = await userDB.find();
     if (!data) {
-      return res
-        .status(404)
-        .json({
-          status: "failure",
-          message: "not users found in the database.",
-        });
+      return res.status(404).json({
+        status: "failure",
+        message: "not users found in the database.",
+      });
     }
 
     res.json({
@@ -58,28 +54,27 @@ module.exports = {
         .status(404)
         .json({ status: "failure", message: "user not found " });
     }
-    res
-      .status(200)
-      .json({
-        status: "success",
-        message: "successfully fetched user data.",
-        data: user,
-      });
+    res.status(200).json({
+      status: "success",
+      message: "successfully fetched user data.",
+      data: user,
+    });
   },
 
   createProduct: async (req, res) => {
-    const {value,error} = joiProductSchema.validate(req.body);
-    if(error){ return res.status(400).json({message:error.details[0].message})}
+    const { value, error } = joiProductSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
 
+    
     const { title, description, price, image, category } = value;
-  
+
     await productDB.create({ title, description, price, image, category });
     res
       .status(201)
       .json({ status: "success", message: "successfully created a product" });
   },
-
-
 
   deleteProduct: async (req, res) => {
     const { id } = req.body;
@@ -102,25 +97,21 @@ module.exports = {
         .status(404)
         .json({ status: "Failure", message: "No product found on database" });
     }
-    res
-      .status(200)
-      .json({
-        status: "Success",
-        message: "Successfully fetched products details",
-        data: products,
-      });
+    res.status(200).json({
+      status: "Success",
+      message: "Successfully fetched products details",
+      data: products,
+    });
   },
   productByCategory: async (req, res) => {
     const type = req.query.type;
     const data = await productDB.find({ category: type });
     console.log(data);
     if (data.length == 0) {
-      res
-        .status(404)
-        .json({
-          status: "failure",
-          message: "Given Category not found on database.",
-        });
+      res.status(404).json({
+        status: "failure",
+        message: "Given Category not found on database.",
+      });
     }
     res.json({
       status: "Successfully fetched product details",
@@ -146,20 +137,20 @@ module.exports = {
   },
 
   updateProduct: async (req, res) => {
-    const {value,error}= joiProductSchema.validate(req.body)
-    if(error){return res.status(401).json({message:error.details[0].message})}
+    const { value, error } = joiProductSchema.validate(req.body);
+    if (error) {
+      return res.status(401).json({ message: error.details[0].message });
+    }
 
     const { productId, title, description, price, image, category } = value;
     const pIdCheck = await productDB.findById(productId); //checking product by its id if product exist
     if (!pIdCheck) {
-      return res
-        .status(404)
-        .json({
-          status: "failure",
-          message: "Product not found in the database. Check the product Id.",
-        });
+      return res.status(404).json({
+        status: "failure",
+        message: "Product not found in the database. Check the product Id.",
+      });
     }
-     await productDB.findByIdAndUpdate(
+    await productDB.findByIdAndUpdate(
       { _id: productId },
       {
         $set: {
@@ -178,7 +169,7 @@ module.exports = {
 
   orderDetails: async (req, res) => {
     const order = await OrderDB.find();
-    console.log(order)
+    console.log(order);
     if (order.length === 0) {
       return res
         .status(204)
@@ -186,38 +177,39 @@ module.exports = {
     }
     res.status(200).json({
       status: "Success",
-      message:"Successfully fetched order details",
-      order
+      message: "Successfully fetched order details",
+      order,
     });
-
   },
 
-  analysis:async(req,res)=>{
-    const order= await OrderDB.find();
+  analysis: async (req, res) => {
+    const order = await OrderDB.find();
 
+    //METHOD-1-MEDIUM
+    const data = await OrderDB.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalProductPurchased: { $sum: { $size: "$products" } },
+          revenue: { $sum: "$total_amount" },
+        },
+      },
+      { $project: { _id: 0 } },
+    ]);
 
-   //METHOD-1-MEDIUM
-  const data = await OrderDB.aggregate([{
-    $group:{
-      _id:null,
-      totalProductPurchased:{$sum:{$size:"$products"}},
-      revenue:{$sum:"$total_amount"}
-    } },
-    {$project:{_id:0}}
- ])
-    
-  //method-2-EASY
+    //method-2-EASY
     //  let totalProducts = 0;
-  // let revenue = 0;
-  // for(value of order){
-  //   totalProducts +=value.products.length;
-  //   revenue += value.total_amount;
-  // }
-// res.json({status:"Success",message:"working",totalProductsPurchased:totalProducts,revenue})
-   
+    // let revenue = 0;
+    // for(value of order){
+    //   totalProducts +=value.products.length;
+    //   revenue += value.total_amount;
+    // }
+    // res.json({status:"Success",message:"working",totalProductsPurchased:totalProducts,revenue})
 
-res.json({data})
+    res.json({ data });
+  },
+  trail:async(req,res)=>{
+    const imagePath = req.file.path;  // Store the file path example :  "uploads\\1698479563658.png"
+    res.json({message:"working",imagePath})
   }
-
 };
-

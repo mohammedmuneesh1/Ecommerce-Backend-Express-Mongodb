@@ -132,7 +132,7 @@ module.exports = {
         message: "This product is already in your cart.",
       });
     }
-    await userDB.updateOne({ _id: userId }, { $push: { cart: productId } });
+    await userDB.updateOne({ _id: userId }, { $push: { cart: productId } }); //addtoset
     // const userWithCart = await userDB.findOne({_id:userId} );
     // console.log(userWithCart.cart);
     res.status(201).json({
