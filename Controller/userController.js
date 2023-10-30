@@ -125,14 +125,9 @@ module.exports = {
         message: `make sure you entered productId:`,
       });
     }
-    const chkItemExist = await userDB.findOne({ _id: userId, cart: productId });
-    // console.log(chkItemExist)
-    if (chkItemExist) {
-      return res.status(409).json({
-        message: "This product is already in your cart.",
-      });
-    }
-    await userDB.updateOne({ _id: userId }, { $push: { cart: productId } }); //addtoset
+    
+    await userDB.updateOne({ _id: userId }, { $addToSet: { cart: productId } });
+
     // const userWithCart = await userDB.findOne({_id:userId} );
     // console.log(userWithCart.cart);
     res.status(201).json({

@@ -1,7 +1,7 @@
 require('dotenv').config()
 const express = require("express")
 const app =express()
-const port = 3000
+const port = 8000
 const adminRoutes = require('./Routes/adminRoutes')
 const userRoutes = require('./Routes/userRoutes')
 const { mongoose, db } = require('./Model/databaseConnection')
