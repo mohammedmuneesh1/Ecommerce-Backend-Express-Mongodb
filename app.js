@@ -5,11 +5,9 @@ const port = 8000
 const adminRoutes = require('./Routes/adminRoutes')
 const userRoutes = require('./Routes/userRoutes')
 const { mongoose, db } = require('./Model/databaseConnection')
-
 app.use(express.json())
 app.use('/api/admin',adminRoutes)
 app.use('/api/users',userRoutes)
-
 
 db.on("error", (error) => {
     console.error("Database connection error:", error);

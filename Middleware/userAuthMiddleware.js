@@ -4,7 +4,7 @@ module.exports = function verifyToken(req,res,next){
     const Btoken = req.headers['authorization']
     
   if (!Btoken) {
-    return res.status(403).json({ error: 'No Token Provided 123' });
+    return res.status(403).json({ error: 'No Token Provided' });
   }
     let token = Btoken.split(' ')[1]
    
