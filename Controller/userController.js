@@ -23,17 +23,12 @@ module.exports = {
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
-    const { name, email, username, password } = value;
-    //check if username already exist on database userDB
-    const Ucheck = await userDB.findOne({ username });
+    const { name, email,password } = value;
+
+
     const uEmailCheck = await userDB.findOne({ email });
-    if (Ucheck) {
-      return res.status(409).json({
-        message: "Username already taken. Please choose a different username",
-      });
-       //409 conflict [conflict due to username already in use]
-    }
-      else if (uEmailCheck){return res.status(409).json({message:"Already registered with this email. Provide new Email"})}
+
+       if (uEmailCheck){return res.status(409).json({message:"Already registered with this email. Provide new Email"})}
     
      
 
@@ -42,7 +37,7 @@ module.exports = {
     // const hashedPassword = await bcrypt.hash(password,salt)
     // await userDB.create({ username, password:hashedPassword, email, name });
 
-    await userDB.create({ username, password, email, name });
+    await userDB.create({password, email, name });
     res
       .status(201)
       .json({ status: "success", message: "Registration successful!" });
@@ -125,7 +120,7 @@ module.exports = {
         message: `make sure you entered productId:`,
       });
     }
-    
+
     await userDB.updateOne({ _id: userId }, { $addToSet: { cart: productId } });
 
     // const userWithCart = await userDB.findOne({_id:userId} );
