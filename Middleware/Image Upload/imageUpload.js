@@ -1,3 +1,6 @@
+
+const fs = require("fs")  //USED TO REMOVE LOCALLY UPLOADED IMAGE ONCE IT UPLOADED INTO CLOUDINARY
+//multer START
 const multer = require('multer')
 const storage = multer.diskStorage({
     destination:'uploads/',
@@ -6,6 +9,7 @@ const storage = multer.diskStorage({
     }
 })
 const upload = multer({storage})
+//MULTER END
 
 //CLOUDINARY
 const cloudinary = require("cloudinary").v2
@@ -29,6 +33,13 @@ const imgUpload = (req,res,next)=>{
             })
             // console.log('Cloudinary Upload Result:', result); 
             req.body.image = result.secure_url;  //HERE WE PASSING THE IMAGE URL INTO {image} = req.body
+      
+       
+            fs.unlink(req.file.path, (unlinkerr) => {
+                if (unlinkerr) {
+                    console.log("Error deleting local file", unlinkerr)
+                }
+            })
             next();
 
         }
@@ -40,3 +51,5 @@ const imgUpload = (req,res,next)=>{
     })
 }
 module.exports = imgUpload
+
+//REMEMBER !: you cant see the upload photo in uploads folder because you delete it using fs.unlink;
